@@ -72,9 +72,8 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              _buildLocaleToggle(context),
               _buildThemeToggle(context),
-              _buildLogoutButton(context),
+              _buildOverflowMenu(context),
             ],
           ),
           const SizedBox(height: 20),
@@ -120,24 +119,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLocaleToggle(BuildContext context) {
-    return Consumer<LocaleProvider>(
-      builder: (context, localeProvider, _) {
-        final isId = localeProvider.locale.languageCode == 'id';
-        return IconButton(
-          tooltip: AppLocalizations.of(context).language,
-          icon: Text(
-            isId ? '🇮🇩' : '🇬🇧',
-            style: const TextStyle(fontSize: 20),
-          ),
-          onPressed: () {
-            localeProvider.setLocale(Locale(isId ? 'en' : 'id'));
-          },
-        );
-      },
-    );
-  }
-
   Widget _buildThemeToggle(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, _) {
@@ -154,34 +135,92 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLogoutButton(BuildContext context) {
+  Widget _buildOverflowMenu(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
-    return IconButton(
-      tooltip: l10n.logout,
-      icon: const Icon(Icons.logout_rounded),
-      onPressed: () {
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text(l10n.logout),
-            content: Text(l10n.logoutConfirm),
-            actions: [
-              TextButton(
-                onPressed: () => context.pop(),
-                child: Text(l10n.cancel),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  context.pop();
-                  context.read<AuthProvider>().logout();
-                },
-                child: Text(l10n.yes),
-              ),
-            ],
+    return Consumer<LocaleProvider>(
+      builder: (context, localeProvider, _) {
+        final isId = localeProvider.locale.languageCode == 'id';
+
+        return PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert_rounded),
+          tooltip: l10n.language,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
+          onSelected: (value) {
+            switch (value) {
+              case 'locale':
+                localeProvider.setLocale(Locale(isId ? 'en' : 'id'));
+              case 'logout':
+                _showLogoutDialog(context);
+            }
+          },
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 'locale',
+              child: Row(
+                children: [
+                  Text(
+                    isId ? '🇬🇧' : '🇮🇩',
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    isId ? 'EN' : 'ID',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const PopupMenuDivider(),
+            PopupMenuItem(
+              value: 'logout',
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.logout_rounded,
+                    size: 20,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    l10n.logout,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         );
       },
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.logout),
+        content: Text(l10n.logoutConfirm),
+        actions: [
+          TextButton(onPressed: () => context.pop(), child: Text(l10n.cancel)),
+          ElevatedButton(
+            onPressed: () {
+              context.pop();
+              context.read<AuthProvider>().logout();
+            },
+            child: Text(l10n.yes),
+          ),
+        ],
+      ),
     );
   }
 
