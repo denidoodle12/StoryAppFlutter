@@ -15,6 +15,7 @@ import '../../utils/result_state.dart';
 import '../widgets/empty_display.dart';
 import '../widgets/error_display.dart';
 import '../widgets/shimmer_story_list.dart';
+import '../widgets/staggered_slide_transition.dart';
 import '../widgets/story_card.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -302,9 +303,12 @@ class _HomeScreenState extends State<HomeScreen> {
           }
 
           final story = stories[index];
-          return StoryCard(
-            story: story,
-            onTap: () => context.push(AppRoutes.detail(story.id)),
+          return StaggeredSlideTransition(
+            index: index,
+            child: StoryCard(
+              story: story,
+              onTap: () => context.push(AppRoutes.detail(story.id)),
+            ),
           );
         },
       ),
