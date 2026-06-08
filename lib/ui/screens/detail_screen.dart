@@ -278,7 +278,6 @@ class _StoryMapState extends State<_StoryMap> {
           tiltGesturesEnabled: false,
           zoomGesturesEnabled: false,
           myLocationButtonEnabled: false,
-          liteModeEnabled: true,
         ),
       ),
     );

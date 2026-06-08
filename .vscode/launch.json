@@ -5,22 +5,20 @@
       "name": "Story App (Free)",
       "request": "launch",
       "type": "dart",
-      "program": "lib/main.dart",
+      "program": "lib/main_free.dart",
       "args": [
         "--flavor",
-        "free",
-        "--dart-define=FLAVOR=free"
+        "free"
       ]
     },
     {
       "name": "Story App (Paid)",
       "request": "launch",
       "type": "dart",
-      "program": "lib/main.dart",
+      "program": "lib/main_paid.dart",
       "args": [
         "--flavor",
-        "paid",
-        "--dart-define=FLAVOR=paid"
+        "paid"
       ]
     }
   ]

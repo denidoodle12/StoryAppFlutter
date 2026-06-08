@@ -239,10 +239,13 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Text(l10n.logout),
         content: Text(l10n.logoutConfirm),
         actions: [
-          TextButton(onPressed: () => context.pop(), child: Text(l10n.cancel)),
+          TextButton(
+            onPressed: () => ctx.pop(),
+            child: Text(l10n.cancel),
+          ),
           ElevatedButton(
             onPressed: () {
-              context.pop();
+              ctx.pop();
               context.read<AuthProvider>().logout();
             },
             child: Text(l10n.yes),

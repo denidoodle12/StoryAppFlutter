@@ -6,8 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../common/app_colors.dart';
-import '../../common/app_config.dart';
 import '../../common/app_routes.dart';
+import '../../common/flavor_config.dart';
 import '../../common/localization.dart';
 import '../../providers/story_list_provider.dart';
 import '../../providers/story_upload_provider.dart';
@@ -122,8 +122,8 @@ class _UploadScreenState extends State<UploadScreen> {
                 },
               ),
               const SizedBox(height: 24),
-              if (AppConfig.isPaid) _buildLocationPicker(context),
-              if (AppConfig.isFree) _buildPaidFeatureHint(context),
+              if (FlavorConfig.isPaid) _buildLocationPicker(context),
+              if (FlavorConfig.isFree) _buildPaidFeatureHint(context),
               const SizedBox(height: 32),
               Consumer<StoryUploadProvider>(
                 builder: (context, provider, _) {

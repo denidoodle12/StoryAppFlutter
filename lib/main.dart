@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'common/flavor_config.dart';
 import 'common/localization.dart';
 import 'common/styles.dart';
 import 'data/api/api_service.dart';
@@ -60,7 +61,7 @@ class _StoryAppState extends State<StoryApp> {
     final authProvider = context.watch<AuthProvider>();
 
     final materialApp = MaterialApp.router(
-      title: 'Story App',
+      title: FlavorConfig.instance.values.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

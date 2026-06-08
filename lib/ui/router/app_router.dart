@@ -39,7 +39,7 @@ GoRouter createRouter(AuthProvider authProvider) {
         builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(
-        path: '/detail/:id',
+        path: AppRoutes.detailPattern,
         builder: (context, state) {
           final id = state.pathParameters['id']!;
           return DetailScreen(storyId: id);
