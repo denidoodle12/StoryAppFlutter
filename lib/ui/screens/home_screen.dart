@@ -17,8 +17,35 @@ import '../widgets/error_display.dart';
 import '../widgets/shimmer_story_list.dart';
 import '../widgets/story_card.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      context.read<StoryListProvider>().fetchNextPage();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -233,8 +260,10 @@ class HomeScreen extends StatelessWidget {
             builder: (context, provider, _) {
               return switch (provider.state) {
                 ResultLoading() => const ShimmerStoryList(),
-                ResultSuccess<List<Story>>(data: final stories) =>
-                  _buildStoryList(context, stories),
+                ResultSuccess<List<Story>>() => _buildStoryList(
+                  context,
+                  provider,
+                ),
                 ResultError(message: final msg) => ErrorDisplay(
                   message: msg,
                   onRetry: () => provider.fetchStories(),
@@ -252,14 +281,26 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStoryList(BuildContext context, List<Story> stories) {
+  Widget _buildStoryList(BuildContext context, StoryListProvider provider) {
+    final stories = provider.stories;
+
     return RefreshIndicator(
       color: AppColors.primaryColor,
-      onRefresh: () => context.read<StoryListProvider>().fetchStories(),
+      onRefresh: () => provider.fetchStories(),
       child: ListView.builder(
+        controller: _scrollController,
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 80),
-        itemCount: stories.length,
+        itemCount: stories.length + (provider.hasMore ? 1 : 0),
         itemBuilder: (context, index) {
+          if (index == stories.length) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: CircularProgressIndicator(color: AppColors.primaryColor),
+              ),
+            );
+          }
+
           final story = stories[index];
           return StoryCard(
             story: story,
