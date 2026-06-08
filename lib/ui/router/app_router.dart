@@ -5,6 +5,7 @@ import '../../providers/auth_provider.dart';
 import '../screens/detail_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/login_screen.dart';
+import '../screens/pick_location_screen.dart';
 import '../screens/register_screen.dart';
 import '../screens/upload_screen.dart';
 
@@ -47,6 +48,10 @@ GoRouter createRouter(AuthProvider authProvider) {
       GoRoute(
         path: AppRoutes.upload,
         builder: (context, state) => const UploadScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.pickLocation,
+        builder: (context, state) => const PickLocationScreen(),
       ),
     ],
   );

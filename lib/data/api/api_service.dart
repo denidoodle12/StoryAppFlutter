@@ -95,6 +95,8 @@ class ApiService {
     required String description,
     required Uint8List photoBytes,
     required String fileName,
+    double? lat,
+    double? lon,
   }) async {
     final uri = Uri.parse(
       '${ApiConstants.baseUrl}${ApiConstants.storiesEndpoint}',
@@ -106,6 +108,9 @@ class ApiService {
       ..files.add(
         http.MultipartFile.fromBytes('photo', photoBytes, filename: fileName),
       );
+
+    if (lat != null) request.fields['lat'] = lat.toString();
+    if (lon != null) request.fields['lon'] = lon.toString();
 
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);

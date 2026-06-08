@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -119,6 +120,8 @@ class _UploadScreenState extends State<UploadScreen> {
                   return null;
                 },
               ),
+              const SizedBox(height: 24),
+              _buildLocationPicker(context),
               const SizedBox(height: 32),
               Consumer<StoryUploadProvider>(
                 builder: (context, provider, _) {
@@ -216,5 +219,108 @@ class _UploadScreenState extends State<UploadScreen> {
         );
       },
     );
+  }
+
+  Widget _buildLocationPicker(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Consumer<StoryUploadProvider>(
+      builder: (context, provider, _) {
+        if (provider.selectedLocation != null) {
+          return Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: colorScheme.onSurface.withValues(alpha: 0.12),
+              ),
+            ),
+            child: Column(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
+                  child: SizedBox(
+                    height: 120,
+                    width: double.infinity,
+                    child: GoogleMap(
+                      initialCameraPosition: CameraPosition(
+                        target: provider.selectedLocation!,
+                        zoom: 15,
+                      ),
+                      markers: {
+                        Marker(
+                          markerId: const MarkerId('selected'),
+                          position: provider.selectedLocation!,
+                        ),
+                      },
+                      zoomControlsEnabled: false,
+                      scrollGesturesEnabled: false,
+                      rotateGesturesEnabled: false,
+                      tiltGesturesEnabled: false,
+                      zoomGesturesEnabled: false,
+                      myLocationButtonEnabled: false,
+                      liteModeEnabled: true,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on_rounded,
+                        color: AppColors.primaryColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          provider.selectedAddress ?? '',
+                          style: GoogleFonts.plusJakartaSans(fontSize: 13),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: colorScheme.error,
+                          size: 20,
+                        ),
+                        onPressed: () => provider.clearLocation(),
+                        tooltip: l10n.removeLocation,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return OutlinedButton.icon(
+          onPressed: () => _navigateToPickLocation(),
+          icon: const Icon(Icons.add_location_alt_rounded),
+          label: Text(l10n.addLocation),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(double.infinity, 48),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _navigateToPickLocation() async {
+    final result = await context.push<Map<String, dynamic>>(
+      AppRoutes.pickLocation,
+    );
+
+    if (result != null && mounted) {
+      final latLng = result['latLng'] as LatLng;
+      final address = result['address'] as String;
+      context.read<StoryUploadProvider>().setLocation(latLng, address);
+    }
   }
 }

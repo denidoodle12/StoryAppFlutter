@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../data/repositories/story_repository.dart';
@@ -16,6 +17,12 @@ class StoryUploadProvider extends ChangeNotifier {
 
   Uint8List? _imageBytes;
   Uint8List? get imageBytes => _imageBytes;
+
+  LatLng? _selectedLocation;
+  LatLng? get selectedLocation => _selectedLocation;
+
+  String? _selectedAddress;
+  String? get selectedAddress => _selectedAddress;
 
   bool _isUploading = false;
   bool get isUploading => _isUploading;
@@ -36,6 +43,18 @@ class StoryUploadProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setLocation(LatLng location, String address) {
+    _selectedLocation = location;
+    _selectedAddress = address;
+    notifyListeners();
+  }
+
+  void clearLocation() {
+    _selectedLocation = null;
+    _selectedAddress = null;
+    notifyListeners();
+  }
+
   Future<bool> upload({required String description}) async {
     if (_imageFile == null || _imageBytes == null) {
       _errorMessage = 'Please select an image';
@@ -53,10 +72,14 @@ class StoryUploadProvider extends ChangeNotifier {
         description: description,
         photoBytes: _imageBytes!,
         fileName: _imageFile!.name,
+        lat: _selectedLocation?.latitude,
+        lon: _selectedLocation?.longitude,
       );
       _isUploading = false;
       _imageFile = null;
       _imageBytes = null;
+      _selectedLocation = null;
+      _selectedAddress = null;
       notifyListeners();
       return true;
     } catch (e) {
