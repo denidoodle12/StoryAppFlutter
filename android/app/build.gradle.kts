@@ -32,6 +32,19 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    flavorDimensions += "app"
+    productFlavors {
+        create("free") {
+            dimension = "app"
+            applicationIdSuffix = ".free"
+            resValue("string", "app_name", "Story App Free")
+        }
+        create("paid") {
+            dimension = "app"
+            resValue("string", "app_name", "Story App Premium")
+        }
+    }
 }
 
 kotlin {

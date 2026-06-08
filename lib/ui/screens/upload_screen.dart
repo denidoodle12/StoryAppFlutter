@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../common/app_colors.dart';
+import '../../common/app_config.dart';
 import '../../common/app_routes.dart';
 import '../../common/localization.dart';
 import '../../providers/story_list_provider.dart';
@@ -121,7 +122,8 @@ class _UploadScreenState extends State<UploadScreen> {
                 },
               ),
               const SizedBox(height: 24),
-              _buildLocationPicker(context),
+              if (AppConfig.isPaid) _buildLocationPicker(context),
+              if (AppConfig.isFree) _buildPaidFeatureHint(context),
               const SizedBox(height: 32),
               Consumer<StoryUploadProvider>(
                 builder: (context, provider, _) {
@@ -322,5 +324,23 @@ class _UploadScreenState extends State<UploadScreen> {
       final address = result['address'] as String;
       context.read<StoryUploadProvider>().setLocation(latLng, address);
     }
+  }
+
+  Widget _buildPaidFeatureHint(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Opacity(
+      opacity: 0.5,
+      child: OutlinedButton.icon(
+        onPressed: null,
+        icon: const Icon(Icons.lock_rounded),
+        label: Text('${l10n.addLocation} (Paid)'),
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(double.infinity, 48),
+          disabledForegroundColor: colorScheme.onSurface.withValues(alpha: 0.5),
+        ),
+      ),
+    );
   }
 }

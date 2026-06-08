@@ -1,0 +1,27 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Story App (Free)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "--flavor",
+        "free",
+        "--dart-define=FLAVOR=free"
+      ]
+    },
+    {
+      "name": "Story App (Paid)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "--flavor",
+        "paid",
+        "--dart-define=FLAVOR=paid"
+      ]
+    }
+  ]
+}
