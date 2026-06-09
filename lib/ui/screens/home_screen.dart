@@ -15,10 +15,38 @@ import '../../utils/result_state.dart';
 import '../widgets/empty_display.dart';
 import '../widgets/error_display.dart';
 import '../widgets/shimmer_story_list.dart';
+import '../widgets/staggered_slide_transition.dart';
 import '../widgets/story_card.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      context.read<StoryListProvider>().fetchNextPage();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,9 +100,8 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              _buildLocaleToggle(context),
               _buildThemeToggle(context),
-              _buildLogoutButton(context),
+              _buildOverflowMenu(context),
             ],
           ),
           const SizedBox(height: 20),
@@ -120,24 +147,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLocaleToggle(BuildContext context) {
-    return Consumer<LocaleProvider>(
-      builder: (context, localeProvider, _) {
-        final isId = localeProvider.locale.languageCode == 'id';
-        return IconButton(
-          tooltip: AppLocalizations.of(context).language,
-          icon: Text(
-            isId ? '🇮🇩' : '🇬🇧',
-            style: const TextStyle(fontSize: 20),
-          ),
-          onPressed: () {
-            localeProvider.setLocale(Locale(isId ? 'en' : 'id'));
-          },
-        );
-      },
-    );
-  }
-
   Widget _buildThemeToggle(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, _) {
@@ -154,34 +163,95 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLogoutButton(BuildContext context) {
+  Widget _buildOverflowMenu(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
-    return IconButton(
-      tooltip: l10n.logout,
-      icon: const Icon(Icons.logout_rounded),
-      onPressed: () {
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text(l10n.logout),
-            content: Text(l10n.logoutConfirm),
-            actions: [
-              TextButton(
-                onPressed: () => context.pop(),
-                child: Text(l10n.cancel),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  context.pop();
-                  context.read<AuthProvider>().logout();
-                },
-                child: Text(l10n.yes),
-              ),
-            ],
+    return Consumer<LocaleProvider>(
+      builder: (context, localeProvider, _) {
+        final isId = localeProvider.locale.languageCode == 'id';
+
+        return PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert_rounded),
+          tooltip: l10n.language,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
+          onSelected: (value) {
+            switch (value) {
+              case 'locale':
+                localeProvider.setLocale(Locale(isId ? 'en' : 'id'));
+              case 'logout':
+                _showLogoutDialog(context);
+            }
+          },
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 'locale',
+              child: Row(
+                children: [
+                  Text(
+                    isId ? '🇬🇧' : '🇮🇩',
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    isId ? 'EN' : 'ID',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const PopupMenuDivider(),
+            PopupMenuItem(
+              value: 'logout',
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.logout_rounded,
+                    size: 20,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    l10n.logout,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         );
       },
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.logout),
+        content: Text(l10n.logoutConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => ctx.pop(),
+            child: Text(l10n.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              ctx.pop();
+              context.read<AuthProvider>().logout();
+            },
+            child: Text(l10n.yes),
+          ),
+        ],
+      ),
     );
   }
 
@@ -194,8 +264,10 @@ class HomeScreen extends StatelessWidget {
             builder: (context, provider, _) {
               return switch (provider.state) {
                 ResultLoading() => const ShimmerStoryList(),
-                ResultSuccess<List<Story>>(data: final stories) =>
-                  _buildStoryList(context, stories),
+                ResultSuccess<List<Story>>() => _buildStoryList(
+                  context,
+                  provider,
+                ),
                 ResultError(message: final msg) => ErrorDisplay(
                   message: msg,
                   onRetry: () => provider.fetchStories(),
@@ -213,18 +285,33 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStoryList(BuildContext context, List<Story> stories) {
+  Widget _buildStoryList(BuildContext context, StoryListProvider provider) {
+    final stories = provider.stories;
+
     return RefreshIndicator(
       color: AppColors.primaryColor,
-      onRefresh: () => context.read<StoryListProvider>().fetchStories(),
+      onRefresh: () => provider.fetchStories(),
       child: ListView.builder(
+        controller: _scrollController,
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 80),
-        itemCount: stories.length,
+        itemCount: stories.length + (provider.hasMore ? 1 : 0),
         itemBuilder: (context, index) {
+          if (index == stories.length) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: CircularProgressIndicator(color: AppColors.primaryColor),
+              ),
+            );
+          }
+
           final story = stories[index];
-          return StoryCard(
-            story: story,
-            onTap: () => context.push(AppRoutes.detail(story.id)),
+          return StaggeredSlideTransition(
+            index: index,
+            child: StoryCard(
+              story: story,
+              onTap: () => context.push(AppRoutes.detail(story.id)),
+            ),
           );
         },
       ),

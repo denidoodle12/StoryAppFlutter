@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 
 import '../../common/app_colors.dart';
@@ -163,6 +165,15 @@ class _DetailContent extends StatelessWidget {
                     context,
                   ).textTheme.bodyMedium?.copyWith(height: 1.6),
                 ),
+                if (story.lat != null && story.lon != null) ...[
+                  const SizedBox(height: 24),
+                  Text(
+                    l10n.locationLabel,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  _StoryMap(lat: story.lat!, lon: story.lon!),
+                ],
               ],
             ),
           ),
@@ -189,5 +200,86 @@ class _DetailContent extends StatelessWidget {
     final hour = date.hour.toString().padLeft(2, '0');
     final minute = date.minute.toString().padLeft(2, '0');
     return '${date.day} ${months[date.month - 1]} ${date.year} · $hour:$minute';
+  }
+}
+
+class _StoryMap extends StatefulWidget {
+  final double lat;
+  final double lon;
+
+  const _StoryMap({required this.lat, required this.lon});
+
+  @override
+  State<_StoryMap> createState() => _StoryMapState();
+}
+
+class _StoryMapState extends State<_StoryMap> {
+  String _address = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAddress();
+  }
+
+  Future<void> _loadAddress() async {
+    try {
+      final placemarks = await geocoding.placemarkFromCoordinates(
+        widget.lat,
+        widget.lon,
+      );
+      if (placemarks.isNotEmpty && mounted) {
+        final place = placemarks.first;
+        final parts = [
+          place.street,
+          place.subLocality,
+          place.locality,
+          place.administrativeArea,
+        ].where((e) => e != null && e.isNotEmpty);
+
+        setState(() {
+          _address = parts.join(', ');
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _address =
+              '${widget.lat.toStringAsFixed(4)}, ${widget.lon.toStringAsFixed(4)}';
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final location = LatLng(widget.lat, widget.lon);
+    final l10n = AppLocalizations.of(context);
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        height: 200,
+        child: GoogleMap(
+          initialCameraPosition: CameraPosition(target: location, zoom: 15),
+          markers: {
+            Marker(
+              markerId: const MarkerId('story-location'),
+              position: location,
+              infoWindow: InfoWindow(
+                title: l10n.locationLabel,
+                snippet: _address.isNotEmpty ? _address : '...',
+              ),
+            ),
+          },
+          zoomControlsEnabled: false,
+          scrollGesturesEnabled: false,
+          rotateGesturesEnabled: false,
+          tiltGesturesEnabled: false,
+          zoomGesturesEnabled: false,
+          myLocationButtonEnabled: false,
+        ),
+      ),
+    );
   }
 }

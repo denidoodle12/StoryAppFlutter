@@ -97,6 +97,14 @@ class AppLocalizations {
       _isId ? 'Tidak ada koneksi internet' : 'No internet connection';
   String get serverError =>
       _isId ? 'Terjadi kesalahan pada server' : 'Server error occurred';
+
+  String get pickLocation => _isId ? 'Pilih Lokasi' : 'Pick Location';
+  String get confirm => _isId ? 'Konfirmasi' : 'Confirm';
+  String get selectedLocation => _isId ? 'Lokasi Dipilih' : 'Selected Location';
+  String get location => _isId ? 'Lokasi' : 'Location';
+  String get addLocation => _isId ? 'Tambah Lokasi' : 'Add Location';
+  String get removeLocation => _isId ? 'Hapus Lokasi' : 'Remove Location';
+  String get locationLabel => _isId ? 'Lokasi Cerita' : 'Story Location';
 }
 
 class _AppLocalizationsDelegate

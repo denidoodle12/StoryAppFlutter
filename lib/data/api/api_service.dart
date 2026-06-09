@@ -4,6 +4,10 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 
 import '../../common/api_constants.dart';
+import '../models/detail_response.dart';
+import '../models/general_response.dart';
+import '../models/login_response.dart';
+import '../models/stories_response.dart';
 import '../models/story.dart';
 import '../models/user.dart';
 
@@ -23,9 +27,12 @@ class ApiService {
       body: jsonEncode({'name': name, 'email': email, 'password': password}),
     );
 
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
-    if (body['error'] == true) {
-      throw Exception(body['message'] ?? 'Registration failed');
+    final result = GeneralResponse.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+
+    if (result.error) {
+      throw Exception(result.message);
     }
   }
 
@@ -36,12 +43,15 @@ class ApiService {
       body: jsonEncode({'email': email, 'password': password}),
     );
 
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
-    if (body['error'] == true) {
-      throw Exception(body['message'] ?? 'Login failed');
+    final result = LoginResponse.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+
+    if (result.error || result.loginResult == null) {
+      throw Exception(result.message);
     }
 
-    return User.fromJson(body['loginResult'] as Map<String, dynamic>);
+    return result.loginResult!;
   }
 
   Future<List<Story>> getStories({
@@ -62,15 +72,15 @@ class ApiService {
       headers: {'Authorization': 'Bearer $token'},
     );
 
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
-    if (body['error'] == true) {
-      throw Exception(body['message'] ?? 'Failed to fetch stories');
+    final result = StoriesResponse.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+
+    if (result.error) {
+      throw Exception(result.message);
     }
 
-    final list = body['listStory'] as List<dynamic>;
-    return list
-        .map((json) => Story.fromJson(json as Map<String, dynamic>))
-        .toList();
+    return result.listStory;
   }
 
   Future<Story> getStoryDetail({
@@ -82,12 +92,15 @@ class ApiService {
       headers: {'Authorization': 'Bearer $token'},
     );
 
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
-    if (body['error'] == true) {
-      throw Exception(body['message'] ?? 'Failed to fetch story detail');
+    final result = DetailResponse.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+
+    if (result.error || result.story == null) {
+      throw Exception(result.message);
     }
 
-    return Story.fromJson(body['story'] as Map<String, dynamic>);
+    return result.story!;
   }
 
   Future<void> uploadStory({
@@ -95,6 +108,8 @@ class ApiService {
     required String description,
     required Uint8List photoBytes,
     required String fileName,
+    double? lat,
+    double? lon,
   }) async {
     final uri = Uri.parse(
       '${ApiConstants.baseUrl}${ApiConstants.storiesEndpoint}',
@@ -107,12 +122,18 @@ class ApiService {
         http.MultipartFile.fromBytes('photo', photoBytes, filename: fileName),
       );
 
+    if (lat != null) request.fields['lat'] = lat.toString();
+    if (lon != null) request.fields['lon'] = lon.toString();
+
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
 
-    if (body['error'] == true) {
-      throw Exception(body['message'] ?? 'Failed to upload story');
+    final result = GeneralResponse.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+
+    if (result.error) {
+      throw Exception(result.message);
     }
   }
 }

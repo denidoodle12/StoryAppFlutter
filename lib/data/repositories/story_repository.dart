@@ -28,12 +28,16 @@ class StoryRepository {
     required String description,
     required Uint8List photoBytes,
     required String fileName,
+    double? lat,
+    double? lon,
   }) async {
     await apiService.uploadStory(
       token: token,
       description: description,
       photoBytes: photoBytes,
       fileName: fileName,
+      lat: lat,
+      lon: lon,
     );
   }
 }
